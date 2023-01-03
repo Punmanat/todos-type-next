@@ -1,14 +1,23 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
+
+// Redux
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { addToDo, selectItems } from "../slices/todoSlice";
+
 function Hello() {
+  // Redux
+  const dispatch = useDispatch();
+
+  const items = useSelector(selectItems)
   const [todoItem, setTodoItem] = useState<any>("");
-  const [todoList, setTodoList] = useState<any>([
-    "Hello, World!",
-    "Hello, NextJS!",
-  ]);
+  const [todoList, setTodoList] = useState<any>(items)
 
   const handleAddToDo = () => {
     if (todoItem) {
+      // Redux
+      dispatch(addToDo(todoItem))
       setTodoList((prevState: any) => {
         return [...prevState, todoItem];
       });
