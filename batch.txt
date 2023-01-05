@@ -1,0 +1,132 @@
+----> BATCH RUN <----
+ ----> CHECK POINT <----
+LIQ -> EOD 
+GPP -> EOD
+(Precondition finish LIQ EOD)
+FE -> EOD
+(Precondition finish FE EOD)
+FR -> EOD
+FR -> SOD
+FE -> SOD
+GPP -> SOD
+LIQ -> SOD
+-----------------------------------------------------------------------------------------------------------------
+----> LOG & REPORT  BACKUP<----
+
+1.Backup LIQ Report AUTOQLR, MASTER, AUTOSOD, SASAML
+-----------------------------------------------------------------------------------------------------------------
+LIQ EOD [10.136.101.21]
+
+1.Open LIQ APP at [10.136.101.21] and log in with user admin
+2.Go to sysadmin panel and log off all users
+3.Go to Batch admin and select MASTER and click Execution Journal
+4.Remove task and click add select Frequency: [Once-Specific Date] and Location: [ZNHKG]
+5.In terminal type adm | svc bcp and type trigger
+-----------------------------------------------------------------------------------------------------------------
+LIQ SOD [10.136.101.21]
+
+1.Go to [10.136.101.21] 
+2.Go to Batch admin -> select AUTOSOD -> select and remove task -> 
+add select Frequency: [Once-Specific Date] | time 12:01 |  Location: [ZNHKG]
+3.In terminal type adm | svc bcp and type trigger
+-----------------------------------------------------------------------------------------------------------------
+GPP EOD [10.136.101.17]
+
+1.Log in as sysadmin [NICBEODUSR]
+
+[Operations tab] -> [tasks] -> [New Day Activities]
+
+Clean Deleted Entries					(Global)	
+Delete OLD Non profile Entries			(Global)				
+Clean Profile Audit Entries				(Global)				
+Delete Payments from History			(Global)							
+Clean Deleted Entries					(Local)				
+Delete OLD Non profile Entries			(Local)				
+Clean Profile Audit Entries				(Local)
+
+-----------------------------------------------------------------------------------------------------------------
+GPP SOD [10.136.101.17]
+
+1.Log in as sysadmin [NICBEODUSR]
+
+[Operations tab] -> [tasks] -> [New Day Activities]
+
+Advance to Next Business Date	                       	ADV_GLOBAL --> Next Day
+Activate Matured Profile Changes      	GLOBAL	
+Advance to Next Business Date	           	LOCAL                                      
+        ADV_HKB			
+        ADV_CHATHK                                            
+        ADV_CHATUS                                           
+        ADV_CHATRM                                           
+        ADV_SWIFT                                            
+        ADV_TBET                                           
+        ADV_BOOK   
+            
+Release Warehoused Payments	           	LOCAL               
+Activate Matured Profile Changes         	LOCAL		
+New Standing Orders	LOCAL
+Apply Change		ALL			
+
+-----------------------------------------------------------------------------------------------------------------
+FE EOD [10.136.101.10]
+
+*** Precondition : Finish LIQ GPP ***
+
+*** BEFORE RUN EOD *** (Not run)
+(Not run) Login as [trungroge,npunmanat,wwannakarn.cthitinan]
+(Not run) Click FE - Account Nominal Code Update Process Done
+(Not run) Click FE - Enterprise GL Code Update Process Done
+(Not run) Click FE - General Ledger Transaction Extract Process Done
+
+
+1.Log in as [1.NICBEODUSER (user) / 2.NICBEODSUP (sup) for approval]
+2.Search [Reset EOD Controls] -> Approval
+3.Search [Execute Automated EOD] --> Approval
+4.[NICBEODUSER] -> search [EOD Control & Status Enquiry] (Monitoring) 1.On web app |2. On Mbean (10.136.101.10:8082)
+
+-----------------------------------------------------------------------------------------------------------------
+# FE EOD Long Date Movement (Optional) if > 1 batch
+
+** Precondition : Finish LIQ EOD
+
+1.) Log off User
+2.) Reset EOD Controls
+3.)  Check Business Mode
+	3.1) [Change of Business Date] -> Mode : Pause -> Pause : Yes ; Do not change value
+4.) Run FE Long Date Movement EITHER Scripts OR jar file
+	4.OPT1) Execute "LongDateChange_AllCalendarDays.sql" then "LongDateChange_StartAndEnd.sql"
+	4.OPT2) Execute Java command : java -jar ???.jar
+5. Check if Scripts or sqls are working
+	5.1 Go to "EOD Control & Status Enquiry" In FE GUI
+	5.2 Fill "Process Status" : Not Started
+	5.3 Fill "Active/Inactive Flag" : Yes
+	5.4 Click "Filter"
+	5.5 Serial Number must end at 39 (this column can be sorted)
+6.) Execute Automated EOD --> Approval
+7.) EOD Control & Status Enquiry (monitoring the running batches)
+
+----------------------------------------------------------------------------------------------------------------------------------------
+FE SOD [10.136.101.10]
+
+1.) [Change of Business Date] -> Date : Next Business Date  -> Time : 0:00 -> Mode : Set -> Pause : No -> Accept ; 
+    to advance business date -> Approval
+2.) Change of Business Date -> Pause mode -> Pause = Yes -> Approval
+3.) Go to [Account Limit Expiry Process] -> Next
+-----------------------------------------------------------------------------------------------------------------
+FR EOD [https://10.136.101.18:19084/kgr]
+
+*** Precondition : Finish FE EOD ***
+1.Log in as sysadmin
+2.Utitlities -> Admin -> Batch -> Start All
+-----------------
+if process done
+-----------------
+1.Limits -> Report Setup -> Credit & Settlement Limits -> standard --> apply
+2.Excel -> save reports to FR_reports -> save as after_[change date]
+
+
+-----------------------------------------------------------------------------------------------------------------
+FR SOD [10.136.101.18]
+1.cd FR_Scripts -> on mobaXterm
+2.vi restart_with_date_change.sh -> change server date- -> run scripts
+-----------------------------------------------------------------------------------------------------------------
